@@ -28,6 +28,10 @@
 #include "gcode.h"
 GcodeSuite gcode;
 
+#if ENABLED(ROBOTBASE_CHASSIS)
+  #include "../feature/robotbase_chassis.h"
+#endif
+
 #if ENABLED(WIFI_CUSTOM_COMMAND)
   extern bool wifi_custom_command(char * const command_ptr);
 #endif
@@ -1081,6 +1085,9 @@ void GcodeSuite::process_parsed_command(const bool no_ok/*=false*/) {
     #endif
 
     default:
+      #if ENABLED(ROBOTBASE_CHASSIS)
+        if (process_robotbase_chassis_line(parser.command_ptr)) break;
+      #endif
       #if ENABLED(WIFI_CUSTOM_COMMAND)
         if (wifi_custom_command(parser.command_ptr)) break;
       #endif

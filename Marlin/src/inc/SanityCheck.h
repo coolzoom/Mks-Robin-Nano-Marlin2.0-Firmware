@@ -77,6 +77,15 @@
 #elif HEXIFY(CONFIGURATION_H_VERSION) > HEXIFY(REQUIRED_CONFIGURATION_H_VERSION)
   #error "Your Configuration.h file is for a newer version of Marlin. Upgrade Marlin or downgrade your Configuration.h."
 #endif
+#if ENABLED(ROBOTBASE_CHASSIS)
+  #if LINEAR_AXES < 4
+    #error "ROBOTBASE_CHASSIS requires LINEAR_AXES 4 (four motors: X, Y, Z, and A on the E1 socket)."
+  #endif
+  #if EXTRUDERS > 1
+    #error "ROBOTBASE_CHASSIS requires EXTRUDERS 1 so the E1 driver is free for the fourth wheel axis."
+  #endif
+#endif
+
 #if !defined(CONFIGURATION_ADV_H_VERSION) || HEXIFY(CONFIGURATION_ADV_H_VERSION) < HEXIFY(REQUIRED_CONFIGURATION_ADV_H_VERSION)
   #error "Your Configuration_adv.h file is for an old version of Marlin. Downgrade Marlin or upgrade your Configuration_adv.h."
 #elif HEXIFY(CONFIGURATION_ADV_H_VERSION) > HEXIFY(REQUIRED_CONFIGURATION_ADV_H_VERSION)

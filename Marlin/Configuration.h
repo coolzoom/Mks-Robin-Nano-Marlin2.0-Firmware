@@ -37,6 +37,9 @@
  */
 #define CONFIGURATION_H_VERSION 02000902
 
+/** Mecanum 4-wheel chassis + robotbase serial protocol (see robotbase/README.md). Undef for normal 3D printer. */
+#define ROBOTBASE_CHASSIS
+
 //===========================================================================
 //============================= Getting Started =============================
 //===========================================================================
@@ -163,7 +166,11 @@
  *
  * :[3, 4, 5, 6]
  */
-//#define LINEAR_AXES 3
+#if ENABLED(ROBOTBASE_CHASSIS)
+  #define LINEAR_AXES 4
+#else
+  //#define LINEAR_AXES 3
+#endif
 
 /**
  * Axis codes for additional axes:
@@ -192,13 +199,19 @@
 
 // This defines the number of extruders
 // :[0, 1, 2, 3, 4, 5, 6, 7, 8]
-#define EXTRUDERS 2
+#if ENABLED(ROBOTBASE_CHASSIS)
+  #define EXTRUDERS 1   // E1 socket used as 4th wheel axis (G-code letter A / AXIS4)
+#else
+  #define EXTRUDERS 2
+#endif
 
 // Generally expected filament diameter (1.75, 2.85, 3.0, ...). Used for Volumetric, Filament Width Sensor, etc.
 #define DEFAULT_NOMINAL_FILAMENT_DIA 1.75
 
 // For Cyclops or any "multi-extruder" that shares a single nozzle.
-#define SINGLENOZZLE
+#if DISABLED(ROBOTBASE_CHASSIS)
+  #define SINGLENOZZLE
+#endif
 
 // Save and restore temperature and fan speed on tool-change.
 // Set standby for the unselected tool with M104/106/109 T...
@@ -777,18 +790,20 @@
 // Specify here all the endstop connectors that are connected to any endstop or probe.
 // Almost all printers will be using one per axis. Probes will use one or more of the
 // extra connectors. Leave undefined any used for non-endstop and non-probe purposes.
-#define USE_XMIN_PLUG
-// #define USE_YMIN_PLUG
-#define USE_ZMIN_PLUG
-//#define USE_IMIN_PLUG
-//#define USE_JMIN_PLUG
-//#define USE_KMIN_PLUG
-//#define USE_XMAX_PLUG
-#define USE_YMAX_PLUG
-//#define USE_ZMAX_PLUG
-//#define USE_IMAX_PLUG
-//#define USE_JMAX_PLUG
-//#define USE_KMAX_PLUG
+#if DISABLED(ROBOTBASE_CHASSIS)
+  #define USE_XMIN_PLUG
+  // #define USE_YMIN_PLUG
+  #define USE_ZMIN_PLUG
+  //#define USE_IMIN_PLUG
+  //#define USE_JMIN_PLUG
+  //#define USE_KMIN_PLUG
+  //#define USE_XMAX_PLUG
+  #define USE_YMAX_PLUG
+  //#define USE_ZMAX_PLUG
+  //#define USE_IMAX_PLUG
+  //#define USE_JMAX_PLUG
+  //#define USE_KMAX_PLUG
+#endif
 
 // Enable pullup for all endstops to prevent a floating state
 #define ENDSTOPPULLUPS
@@ -927,14 +942,23 @@
  * Override with M92
  *                                      X, Y, Z [, I [, J [, K]]], E0 [, E1[, E2...]]
  */
-#define DEFAULT_AXIS_STEPS_PER_UNIT   { 80, 80, 400, 93 }
+#if ENABLED(ROBOTBASE_CHASSIS)
+  // Calibrate M92 so each wheel matches robotbase stepDistance (wheel dia, gear ratio, microsteps).
+  #define DEFAULT_AXIS_STEPS_PER_UNIT   { 80, 80, 80, 80, 93 }
+#else
+  #define DEFAULT_AXIS_STEPS_PER_UNIT   { 80, 80, 400, 93 }
+#endif
 
 /**
  * Default Max Feed Rate (mm/s)
  * Override with M203
  *                                      X, Y, Z [, I [, J [, K]]], E0 [, E1[, E2...]]
  */
-#define DEFAULT_MAX_FEEDRATE          { 200, 200, 4, 100 }
+#if ENABLED(ROBOTBASE_CHASSIS)
+  #define DEFAULT_MAX_FEEDRATE          { 200, 200, 200, 200, 25 }
+#else
+  #define DEFAULT_MAX_FEEDRATE          { 200, 200, 4, 100 }
+#endif
 
 //#define LIMITED_MAX_FR_EDITING        // Limit edit via M203 or LCD to DEFAULT_MAX_FEEDRATE * 2
 #if ENABLED(LIMITED_MAX_FR_EDITING)
@@ -947,7 +971,11 @@
  * Override with M201
  *                                      X, Y, Z [, I [, J [, K]]], E0 [, E1[, E2...]]
  */
-#define DEFAULT_MAX_ACCELERATION      { 1000, 1000, 200, 2000 }
+#if ENABLED(ROBOTBASE_CHASSIS)
+  #define DEFAULT_MAX_ACCELERATION      { 800, 800, 800, 800, 500 }
+#else
+  #define DEFAULT_MAX_ACCELERATION      { 1000, 1000, 200, 2000 }
+#endif
 
 //#define LIMITED_MAX_ACCEL_EDITING     // Limit edit via M201 or LCD to DEFAULT_MAX_ACCELERATION * 2
 #if ENABLED(LIMITED_MAX_ACCEL_EDITING)
@@ -979,7 +1007,11 @@
   #define DEFAULT_XJERK 13.0
   #define DEFAULT_YJERK 13.0
   #define DEFAULT_ZJERK  0.3
-  //#define DEFAULT_IJERK  0.3
+  #if LINEAR_AXES >= 4
+    #define DEFAULT_IJERK  13.0
+  #else
+    //#define DEFAULT_IJERK  0.3
+  #endif
   //#define DEFAULT_JJERK  0.3
   //#define DEFAULT_KJERK  0.3
 
@@ -1369,18 +1401,32 @@
 // @section machine
 
 // The size of the printable area
-#define X_BED_SIZE 240
-#define Y_BED_SIZE 230
+#if ENABLED(ROBOTBASE_CHASSIS)
+  #define X_BED_SIZE 10000
+  #define Y_BED_SIZE 10000
+#else
+  #define X_BED_SIZE 240
+  #define Y_BED_SIZE 230
+#endif
 
 // Travel limits (mm) after homing, corresponding to endstop positions.
-#define X_MIN_POS 0
-#define Y_MIN_POS 0
-#define Z_MIN_POS 0
-#define X_MAX_POS X_BED_SIZE
-#define Y_MAX_POS Y_BED_SIZE
-#define Z_MAX_POS 180
-//#define I_MIN_POS 0
-//#define I_MAX_POS 50
+#if ENABLED(ROBOTBASE_CHASSIS)
+  #define X_MIN_POS -500000
+  #define Y_MIN_POS -500000
+  #define Z_MIN_POS -500000
+  #define X_MAX_POS 500000
+  #define Y_MAX_POS 500000
+  #define Z_MAX_POS 500000
+  #define I_MIN_POS -500000
+  #define I_MAX_POS 500000
+#else
+  #define X_MIN_POS 0
+  #define Y_MIN_POS 0
+  #define Z_MIN_POS 0
+  #define X_MAX_POS X_BED_SIZE
+  #define Y_MAX_POS Y_BED_SIZE
+  #define Z_MAX_POS 180
+#endif
 //#define J_MIN_POS 0
 //#define J_MAX_POS 50
 //#define K_MIN_POS 0
@@ -1396,7 +1442,9 @@
  */
 
 // Min software endstops constrain movement within minimum coordinate bounds
-#define MIN_SOFTWARE_ENDSTOPS
+#if DISABLED(ROBOTBASE_CHASSIS)
+  #define MIN_SOFTWARE_ENDSTOPS
+#endif
 #if ENABLED(MIN_SOFTWARE_ENDSTOPS)
   #define MIN_SOFTWARE_ENDSTOP_X
   #define MIN_SOFTWARE_ENDSTOP_Y
@@ -1407,7 +1455,9 @@
 #endif
 
 // Max software endstops constrain movement within maximum coordinate bounds
-#define MAX_SOFTWARE_ENDSTOPS
+#if DISABLED(ROBOTBASE_CHASSIS)
+  #define MAX_SOFTWARE_ENDSTOPS
+#endif
 #if ENABLED(MAX_SOFTWARE_ENDSTOPS)
   #define MAX_SOFTWARE_ENDSTOP_X
   #define MAX_SOFTWARE_ENDSTOP_Y
@@ -1745,7 +1795,11 @@
 #endif
 
 // Homing speeds (mm/min)
-#define HOMING_FEEDRATE_MM_M { (50*60), (50*60), (4*60) }
+#if LINEAR_AXES >= 4
+  #define HOMING_FEEDRATE_MM_M { (50*60), (50*60), (50*60), (50*60) }
+#else
+  #define HOMING_FEEDRATE_MM_M { (50*60), (50*60), (4*60) }
+#endif
 
 // Validate that endstops are triggered on homing moves
 #define VALIDATE_HOMING_ENDSTOPS
