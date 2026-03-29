@@ -40,6 +40,16 @@
 /** Mecanum 4-wheel chassis + robotbase serial protocol (see robotbase/README.md). Undef for normal 3D printer. */
 #define ROBOTBASE_CHASSIS
 
+#if ENABLED(ROBOTBASE_CHASSIS)
+  // --- 轮系参数（与 robotbase.ino 中 WHEEL_DIAMETER / GEAR_RATIO 一致）---
+  // 外径 100 mm，减速 14:1（电机转 14 圈 = 轮 1 圈）
+  #define ROBOT_WHEEL_DIAMETER_MM   100
+  #define ROBOT_GEAR_RATIO          14     // 电机圈数 : 轮一圈
+  #define ROBOT_STEPPER_FULLSTEPS   200    // 1.8° 电机；0.9° 改为 400 并检查 M92
+  // 与外部驱动器拨码/细分一致（非 UART TMC 时 Configuration_adv 里 TMC 微步不生效）
+  #define ROBOT_DRIVER_MICROSTEPS   16     // 常见 8/16/32；改拨码后须同步改此处并 M92/M500
+#endif
+
 //===========================================================================
 //============================= Getting Started =============================
 //===========================================================================
@@ -876,19 +886,32 @@
  *          TMC5130, TMC5130_STANDALONE, TMC5160, TMC5160_STANDALONE
  * :['A4988', 'A5984', 'DRV8825', 'LV8729', 'L6470', 'L6474', 'POWERSTEP01', 'TB6560', 'TB6600', 'TMC2100', 'TMC2130', 'TMC2130_STANDALONE', 'TMC2160', 'TMC2160_STANDALONE', 'TMC2208', 'TMC2208_STANDALONE', 'TMC2209', 'TMC2209_STANDALONE', 'TMC26X', 'TMC26X_STANDALONE', 'TMC2660', 'TMC2660_STANDALONE', 'TMC5130', 'TMC5130_STANDALONE', 'TMC5160', 'TMC5160_STANDALONE']
  */
-#define X_DRIVER_TYPE  TMC2209
-#define Y_DRIVER_TYPE  TMC2209
-#define Z_DRIVER_TYPE  TMC2209
-//#define X2_DRIVER_TYPE A4988
-//#define Y2_DRIVER_TYPE A4988
-//#define Z2_DRIVER_TYPE A4988
-//#define Z3_DRIVER_TYPE A4988
-//#define Z4_DRIVER_TYPE A4988
-//#define I_DRIVER_TYPE  A4988
-//#define J_DRIVER_TYPE  A4988
-//#define K_DRIVER_TYPE  A4988
-#define E0_DRIVER_TYPE TMC2209
-#define E1_DRIVER_TYPE TMC2209
+#if ENABLED(ROBOTBASE_CHASSIS)
+  /**
+   * 外部 STEP/DIR/ENABLE 驱动器（DM542、TB6600、A4988 模块等），无板载 UART。
+   * - 默认 A4988 时序（较通用）；若实为 TB6600 请改为 TB6600；DRV8825 改为 DRV8825（Marlin 会自动加大 DIR 延时与脉冲宽度）。
+   */
+  #define X_DRIVER_TYPE   A4988
+  #define Y_DRIVER_TYPE   A4988
+  #define Z_DRIVER_TYPE   A4988
+  #define I_DRIVER_TYPE   A4988
+  #define E0_DRIVER_TYPE  A4988
+  #define E1_DRIVER_TYPE  A4988
+#else
+  #define X_DRIVER_TYPE  TMC2209
+  #define Y_DRIVER_TYPE  TMC2209
+  #define Z_DRIVER_TYPE  TMC2209
+  //#define X2_DRIVER_TYPE A4988
+  //#define Y2_DRIVER_TYPE A4988
+  //#define Z2_DRIVER_TYPE A4988
+  //#define Z3_DRIVER_TYPE A4988
+  //#define Z4_DRIVER_TYPE A4988
+  //#define I_DRIVER_TYPE  A4988
+  //#define J_DRIVER_TYPE  A4988
+  //#define K_DRIVER_TYPE  A4988
+  #define E0_DRIVER_TYPE TMC2209
+  #define E1_DRIVER_TYPE TMC2209
+#endif
 //#define E2_DRIVER_TYPE A4988
 //#define E3_DRIVER_TYPE A4988
 //#define E4_DRIVER_TYPE A4988
@@ -943,8 +966,11 @@
  *                                      X, Y, Z [, I [, J [, K]]], E0 [, E1[, E2...]]
  */
 #if ENABLED(ROBOTBASE_CHASSIS)
-  // Calibrate M92 so each wheel matches robotbase stepDistance (wheel dia, gear ratio, microsteps).
-  #define DEFAULT_AXIS_STEPS_PER_UNIT   { 80, 80, 80, 80, 93 }
+  // steps/mm（轮缘线位移）：(每圈整步×微步×减速比) / (π×轮径)
+  // = (200×16×14)/(π×100) ≈ 142.598 — X,Y,Z,I 四轮相同；E 为占位（无挤出时可忽略）。
+  #define RB_PI 3.1415926536f
+  #define RB_STEPS_PER_MM_WHEEL ((float(ROBOT_STEPPER_FULLSTEPS) * float(ROBOT_DRIVER_MICROSTEPS) * float(ROBOT_GEAR_RATIO)) / (RB_PI * float(ROBOT_WHEEL_DIAMETER_MM)))
+  #define DEFAULT_AXIS_STEPS_PER_UNIT   { RB_STEPS_PER_MM_WHEEL, RB_STEPS_PER_MM_WHEEL, RB_STEPS_PER_MM_WHEEL, RB_STEPS_PER_MM_WHEEL, 80 }
 #else
   #define DEFAULT_AXIS_STEPS_PER_UNIT   { 80, 80, 400, 93 }
 #endif
