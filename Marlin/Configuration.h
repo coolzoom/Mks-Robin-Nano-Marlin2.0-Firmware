@@ -1088,7 +1088,9 @@
  * The probe replaces the Z-MIN endstop and is used for Z homing.
  * (Automatically enables USE_PROBE_FOR_Z_HOMING.)
  */
- #define Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN
+#if DISABLED(ROBOTBASE_CHASSIS)
+  #define Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN
+#endif
 
 // Force the use of the probe for Z-axis homing
 // #define USE_PROBE_FOR_Z_HOMING
@@ -1145,7 +1147,9 @@
 /**
  * The BLTouch probe uses a Hall effect sensor and emulates a servo.
  */
-#define BLTOUCH
+#if DISABLED(ROBOTBASE_CHASSIS)
+  #define BLTOUCH
+#endif
 
 /**
  * Touch-MI Probe by hotends.fr
@@ -1355,7 +1359,9 @@
 #define Y_ENABLE_ON 0
 #define Z_ENABLE_ON 0
 #define E_ENABLE_ON 0 // For all extruders
-//#define I_ENABLE_ON 0
+#if LINEAR_AXES >= 4
+  #define I_ENABLE_ON 0
+#endif
 //#define J_ENABLE_ON 0
 //#define K_ENABLE_ON 0
 
@@ -1420,7 +1426,9 @@
 #define X_HOME_DIR -1
 #define Y_HOME_DIR 1
 #define Z_HOME_DIR -1
-//#define I_HOME_DIR -1
+#if ENABLED(ROBOTBASE_CHASSIS)
+  #define I_HOME_DIR -1
+#endif
 //#define J_HOME_DIR -1
 //#define K_HOME_DIR -1
 
@@ -1612,7 +1620,9 @@
  */
 //#define AUTO_BED_LEVELING_3POINT
 //#define AUTO_BED_LEVELING_LINEAR
-#define AUTO_BED_LEVELING_BILINEAR
+#if DISABLED(ROBOTBASE_CHASSIS)
+  #define AUTO_BED_LEVELING_BILINEAR
+#endif
 //#define AUTO_BED_LEVELING_UBL
 //#define MESH_BED_LEVELING
 
